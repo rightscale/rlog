@@ -28,9 +28,9 @@ GIT_RS_DEPEND =
 
 # ===== leave this alone (usually :-)) =====
 
-#Fetch dependencies and compile
+# build (no dependencies to fetch for build purposes, only testing).
 .PHONY: all
-all: dependencies go-compiler gopath git-rs-checkout
+all: go-compiler gopath
 	@for pkg in $(GO_INSTALL) ; do \
 		go install $(PROJECT_PATH)/$$pkg ; \
 	done
@@ -42,15 +42,10 @@ install: all
 
 #Run specs
 .PHONY: test
-test: dependencies go-compiler gopath
+test: go-compiler gopath go-get
 	@for pkg in $(GO_INSTALL) ; do \
 		go test $(PROJECT_PATH)/$$pkg ; \
 	done
-
-
-#Fetch dependencies
-.PHONY: dependencies
-dependencies: go-get git-rs-checkout
 
 
 #Fetch using go get
@@ -60,25 +55,6 @@ go-get: go-compiler gopath bazaar
 		go get $$repo ; \
 	done
 
-
-# Fetch using git clone into github.com/brsc
-# Run make in each of them
-.PHONY: git-rs-checkout
-git-rs-checkout: git gopath
-	@for gitRepo in $(GIT_RS_DEPEND) ; do \
-		if [ ! -d $(GOPATH)/src/github.com/brsc/$$gitRepo ]; then \
-		echo "Cloning $$gitRepo"; \
-		git clone git@github.com:/brsc/$$gitRepo.git $(GOPATH)/src/github.com/brsc/$$gitRepo ; \
-		else \
-		echo "Repository $$gitRepo already cloned"; \
-		fi; \
-	done
-
-	@echo "Done fetching repositories, using recursive make"
-	@for recurse in $(GIT_RS_DEPEND) ; do \
-		echo "Executing recursive make for $(GOPATH)/src/$$recurse"; \
-		make -C $(GOPATH)/src/github.com/brsc/$$recurse all ; \
-	done
 
 #Execute make test recursively in all directories specified
 .PHONY: test-recursive
@@ -104,14 +80,6 @@ GO_COMPILER := $(shell go version >> /dev/null; echo $$?)
 go-compiler:
 ifneq ($(GO_COMPILER), 0)
 	$(error "Please install go compiler first")
-endif
-
-#Check if git is installed
-.PHONY: git
-GIT := $(shell git version >> /dev/null; echo $$?)
-git:
-ifneq ($(GIT), 0)
-	$(error "Please install git first")
 endif
 
 #Check if bazaar version control system is installed
