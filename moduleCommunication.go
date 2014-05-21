@@ -6,10 +6,10 @@ goroutine accessing the logger API and the modules writing the log messages to v
 */
 
 import (
-	"container/list"
-	"github.com/brsc/rlog/common"
-	"log"
-	"time"
+  "container/list"
+  "github.com/brsc/rlog/common"
+  "log"
+  "time"
 )
 
 //msgChannels is a linked list of channels. The channels are used to send messages to the modules
@@ -22,9 +22,9 @@ var flushChannels *list.List = list.New()
 //getMsgChannel creates a log message channel and registers it.
 //Returns: log message channel
 func getMsgChannel() <-chan (*common.RlogMsg) {
-	c := make(chan *common.RlogMsg, config.ChanCapacity)
-	msgChannels.PushBack(c)
-	return c
+  c := make(chan *common.RlogMsg, config.ChanCapacity)
+  msgChannels.PushBack(c)
+  return c
 }
 
 //getFlushChannel creates a flush command channel and registers it. A flush channel
@@ -33,25 +33,25 @@ func getMsgChannel() <-chan (*common.RlogMsg) {
 //of time for the module to respond with a success message to the flush.
 //Returns: flush message channel
 func getFlushChannel() chan (chan (bool)) {
-	c := make(chan chan (bool), 1)
-	flushChannels.PushBack(c)
-	return c
+  c := make(chan chan (bool), 1)
+  flushChannels.PushBack(c)
+  return c
 }
 
 //pushToChannels pushes a message to all registered channels.
 //Arguments: message to push
 func pushToChannels(msg *common.RlogMsg) {
 
-	for e := msgChannels.Front(); e != nil; e = e.Next() {
-		//Cycle over all registered channels, perform a type conversion (because of the linked
-		//list) and call the helper function to push the log data without blocking
-		c, ok := e.Value.(chan (*common.RlogMsg))
-		if ok {
-			pushToChannelsHelper(c, msg)
-		} else {
-			log.Panic("[RightLog4Go FATAL] type assertion for msg channel failed\n")
-		}
-	}
+  for e := msgChannels.Front(); e != nil; e = e.Next() {
+    //Cycle over all registered channels, perform a type conversion (because of the linked
+    //list) and call the helper function to push the log data without blocking
+    c, ok := e.Value.(chan (*common.RlogMsg))
+    if ok {
+      pushToChannelsHelper(c, msg)
+    } else {
+      log.Panic("[RightLog4Go FATAL] type assertion for msg channel failed\n")
+    }
+  }
 }
 
 //pushToChannelsHelper pushes to a channel without blocking forever. If the channel is full, one element gets
@@ -60,32 +60,32 @@ func pushToChannels(msg *common.RlogMsg) {
 //Arguments: [c] destination channel. [msg] Message to log
 func pushToChannelsHelper(c chan (*common.RlogMsg), msg *common.RlogMsg) {
 
-	success := false
-	for retries := 0; retries < 3 && !success; retries++ {
-		//Loop until either (a) success (b) #retries exceeded
-		select {
-		case c <- msg:
-			//Send success
-			success = true
-		default:
-			//Send failed, remove one item and retry
-			// Do not log send failures using RightLog4Go because it would create a feedback loop
-			log.Printf("[RightLog4Go] Log buffer full, delete and retry")
-			nonBlockingChanRead(c)
-		}
-	}
+  success := false
+  for retries := 0; retries < 3 && !success; retries++ {
+    //Loop until either (a) success (b) #retries exceeded
+    select {
+    case c <- msg:
+      //Send success
+      success = true
+    default:
+      //Send failed, remove one item and retry
+      // Do not log send failures using RightLog4Go because it would create a feedback loop
+      log.Printf("[RightLog4Go] Log buffer full, delete and retry")
+      nonBlockingChanRead(c)
+    }
+  }
 }
 
 //nonBlockingChanRead reads one item from the given channel. nonBlockingChanRead
 //shall not block when the channel is empty
 //Returns: Element read from channel, nil if channel empty
 func nonBlockingChanRead(c <-chan (*common.RlogMsg)) *common.RlogMsg {
-	select {
-	case ret := <-c:
-		return ret
-	default:
-		return nil
-	}
+  select {
+  case ret := <-c:
+    return ret
+  default:
+    return nil
+  }
 }
 
 //flushHelper sends the flush command and waits for a response from the module. The send channel has buffer
@@ -97,22 +97,22 @@ func nonBlockingChanRead(c <-chan (*common.RlogMsg)) *common.RlogMsg {
 //Arguments: Channel to send flush command
 //Returns: true on success, false otherwise
 func flushHelper(c chan (chan (bool))) bool {
-	responseChan := make(chan (bool), 1)
-	select {
-	//Phase 1: send flush command including a return channel to module
-	case c <- responseChan:
-		//Phase 2: wait for module to respond (or time out)
-		select {
-		case <-responseChan:
-			//OK, we are done
-			return true
-		case <-time.After(time.Second * time.Duration(config.FlushTimeout)):
-			log.Printf("[RightLog4Go] flush command ACK timed out\n")
-			return false
-		}
-	default:
-		//Flush channel full ==> pending flush?
-		log.Printf("[RightLog4Go] Sending flush command to module failed, pending flush?\n")
-		return false
-	}
+  responseChan := make(chan (bool), 1)
+  select {
+  //Phase 1: send flush command including a return channel to module
+  case c <- responseChan:
+    //Phase 2: wait for module to respond (or time out)
+    select {
+    case <-responseChan:
+      //OK, we are done
+      return true
+    case <-time.After(time.Second * time.Duration(config.FlushTimeout)):
+      log.Printf("[RightLog4Go] flush command ACK timed out\n")
+      return false
+    }
+  default:
+    //Flush channel full ==> pending flush?
+    log.Printf("[RightLog4Go] Sending flush command to module failed, pending flush?\n")
+    return false
+  }
 }
