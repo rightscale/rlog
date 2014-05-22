@@ -9,6 +9,7 @@ import (
   "github.com/brsc/rlog/common"
   "log"
   goSyslog "log/syslog"
+  "os"
   "path/filepath"
   "strings"
 )
@@ -40,7 +41,7 @@ func NewLocalSyslogLogger() (*syslogModuleConfig, error) {
 
   var err error
   conf := new(syslogModuleConfig)
-  _, processName := filepath.Split(os.Args[0])  // use leaf name instead of full path to binary
+  _, processName := filepath.Split(os.Args[0]) // use leaf name instead of full path to binary
 
   conf.syslogConn, err = goSyslog.Dial(network, addr, goSyslog.LOG_INFO, processName)
   if err != nil {

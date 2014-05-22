@@ -15,8 +15,7 @@ PROJECT_PATH = github.com/brsc/rlog
 GO_GET_DEPEND = "launchpad.net/gocheck"
 
 #Define packages to run "go install" and "go test" (space separated list), example:
-#GO_INSTALL = "log/rlog" "log/httplog"
-GO_INSTALL = "."
+GO_INSTALL = "." "common" "console" "file" "stdout" "syslog"
  
 #Define repositories which should be cloned into GOPATH/src/github.com/brsc.
 #The repositories defined here have a top-level makefile to be executed. Just

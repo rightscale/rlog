@@ -6,10 +6,16 @@ import (
   "path/filepath"
   "regexp"
   "strconv"
+  "strings"
 )
 
-//Regex to remove tabs and newlines (const)
-var tabsNewlines = regexp.MustCompile(`\n(\t)?`)
+// Regex to remove tabs and newlines.
+const (
+  replacementWhitespacePattern = `[\r\n\t]+`
+  replacementWhitespace        = "  "
+)
+
+var replaceWhitespaceRegex = regexp.MustCompile(replacementWhitespacePattern)
 
 //SyslogHeader gathers environment information to generate a log prefix
 func SyslogHeader() string {
@@ -34,7 +40,6 @@ func FormatMessage(rawRlogMsg *RlogMsg, prefix string, removeNewlines bool) stri
   logMsg := rawRlogMsg.Msg
   trace := rawRlogMsg.StackTrace
   if removeNewlines {
-    //Replace newlines by #012 and remove indentations
     logMsg = ReplaceNewlines(logMsg)
   }
 
@@ -52,9 +57,13 @@ func FormatMessage(rawRlogMsg *RlogMsg, prefix string, removeNewlines bool) stri
   return res
 }
 
-//ReplaceNewlines replaces newlines with #012 and removes indentations
-//Arguments: a string for newline replacement
-//Returns: string with #012 instead of newlines
+// Replaces any tabs/newlines with double-space and removes indentations due to
+// newlines being displayed as #012 in syslog (which is ugly).
+//
+// msg: message for newline replacement
+//
+// return: message with newlines replaced
 func ReplaceNewlines(msg string) string {
-  return tabsNewlines.ReplaceAllString(msg, "#012")
+  return strings.Trim(
+    replaceWhitespaceRegex.ReplaceAllString(msg, replacementWhitespace), " ")
 }

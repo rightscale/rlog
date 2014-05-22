@@ -77,7 +77,11 @@ func (conf *fileLogger) LaunchModule(dataChan <-chan (*common.RlogMsg), flushCha
 
 //writeMsg writes message to file
 func (conf *fileLogger) writeMsg(rawRlogMsg *common.RlogMsg, prefix string) {
-  _, err := conf.fileHandle.WriteString(common.FormatMessage(rawRlogMsg, prefix, conf.removeNewlines) + "\n")
+  _, err := conf.fileHandle.WriteString(
+    common.FormatMessage(rawRlogMsg, prefix, conf.removeNewlines))
+  if err != nil {
+    _, err = conf.fileHandle.WriteString("\n")
+  }
   if !conf.loggedError && err != nil {
     //Log logging error once (only once, otherwise we get a feedback loop)
     conf.loggedError = true
