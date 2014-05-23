@@ -239,41 +239,9 @@ func (l logger) Debug(format string, a ...interface{}) {
 
 //===== Logging API with tags =====
 
-//FatalT logs a message of severity "fatal".
-//Arguments: tag and printf formatted message
-func FatalT(tag string, format string, a ...interface{}) {
-  genericLogHandler("FATAL", tag, format, a, SeverityFatal, true)
-}
-
-//FatalT logs a message of severity "fatal".
-//Arguments: tag and printf formatted message
-func (l logger) FatalT(tag string, format string, a ...interface{}) {
-  genericLogHandler("FATAL", tag, format, a, SeverityFatal, true)
-}
-
-//ErrorT logs a message of severity "error".
-//Arguments: tag and printf formatted message
-func ErrorT(tag string, format string, a ...interface{}) {
-  genericLogHandler("ERROR", tag, format, a, SeverityError, true)
-}
-
-//ErrorT logs a message of severity "error".
-//Arguments: tag and printf formatted message
-func (l logger) ErrorT(tag string, format string, a ...interface{}) {
-  genericLogHandler("ERROR", tag, format, a, SeverityError, true)
-}
-
-//WarnT logs a message of severity "warn".
-//Arguments: tag and printf formatted message
-func WarnT(tag string, format string, a ...interface{}) {
-  genericLogHandler("WARN", tag, format, a, SeverityWarn, true)
-}
-
-//WarnT logs a message of severity "warn".
-//Arguments: tag and printf formatted message
-func (l logger) WarnT(tag string, format string, a ...interface{}) {
-  genericLogHandler("WARN", tag, format, a, SeverityWarn, true)
-}
+// note that Fatal, Error and Warn messages should never be tagged because such
+// messages should never be filtered out (by tag). Level filtering still applies
+// only because it is accepted behavior for all logging libraries.
 
 //InfoT logs a message of severity "info".
 //Arguments: tag and printf formatted message
