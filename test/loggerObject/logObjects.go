@@ -21,6 +21,7 @@ func main() {
   //Test all the different log levels
   logger.Debug("debug log entry")
   logger.Info("info log entry")
+  logger.Warn("warn log entry")
   logger.Error("error log entry")
   logger.Fatal("fatal log entry")
 

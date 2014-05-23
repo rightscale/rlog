@@ -92,6 +92,10 @@ func (s *Initialized) TestLoggingRoutines(t *C) {
   Error("testmessage %d", 10)
   logFunctionVerify(t, SeverityError, false, msg, myChan)
 
+  //When printing an Warn message, it should generate an Warn message and push it to the channel
+  Warn("testmessage %d", 10)
+  logFunctionVerify(t, SeverityWarn, false, msg, myChan)
+
   //When printing an Info message, it should generate an Info message and push it to the channel
   Info("testmessage %d", 10)
   logFunctionVerify(t, SeverityInfo, false, msg, myChan)
@@ -121,6 +125,10 @@ func (s *Initialized) TestLogObjectRoutines(t *C) {
   //When printing an Error message, it should generate an Error message and push it to the channel
   myLogger.Error("logger object test message %d", 20)
   logFunctionVerify(t, SeverityError, false, msg, myChan)
+
+  //When printing an Warn message, it should generate an Warn message and push it to the channel
+  myLogger.Warn("logger object test message %d", 20)
+  logFunctionVerify(t, SeverityWarn, false, msg, myChan)
 
   //When printing an Info message, it should generate an Info message and push it to the channel
   myLogger.Info("logger object test message %d", 20)

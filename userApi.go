@@ -6,6 +6,7 @@ import (
   "github.com/brsc/rlog/common"
   "log"
   "math/rand"
+  "strings"
   "sync/atomic"
   "time"
 )
@@ -14,6 +15,7 @@ import (
 const (
   SeverityFatal common.RlogSeverity = iota
   SeverityError common.RlogSeverity = iota
+  SeverityWarn  common.RlogSeverity = iota
   SeverityInfo  common.RlogSeverity = iota
   SeverityDebug common.RlogSeverity = iota
 )
@@ -129,6 +131,26 @@ func launchAllModules() {
 
 //===== Configuration API =====
 
+// converts the given string value to log level (severity).
+//
+// value: to convert
+func (c *RlogConfig) SeverityFromString(value string) {
+  switch strings.ToLower(value) {
+  case "fatal":
+    c.Severity = SeverityFatal
+  case "error":
+    c.Severity = SeverityError
+  case "warn":
+    c.Severity = SeverityWarn
+  case "info":
+    c.Severity = SeverityInfo
+  case "debug":
+    c.Severity = SeverityDebug
+  default:
+    panic(fmt.Sprintf("Unknown severity: %s", value))
+  }
+}
+
 //EnableTagsExcept enables output for all messages except the ones carrying one of the tags
 //specified. Using "EnableTagsExcept" overwrites the settings from "DisableTagsExcept".
 func (c *RlogConfig) EnableTagsExcept(tags []string) {
@@ -179,6 +201,18 @@ func (l logger) Error(format string, a ...interface{}) {
   genericLogHandler("ERROR", "", format, a, SeverityError, true)
 }
 
+//Warn logs a message of severity "warn".
+//Arguments: printf formatted message
+func Warn(format string, a ...interface{}) {
+  genericLogHandler("WARN", "", format, a, SeverityWarn, false)
+}
+
+//Warn logs a message of severity "warn".
+//Arguments: printf formatted message
+func (l logger) Warn(format string, a ...interface{}) {
+  genericLogHandler("WARN", "", format, a, SeverityWarn, false)
+}
+
 //Info logs a message of severity "info".
 //Arguments: printf formatted message
 func Info(format string, a ...interface{}) {
@@ -227,6 +261,18 @@ func ErrorT(tag string, format string, a ...interface{}) {
 //Arguments: tag and printf formatted message
 func (l logger) ErrorT(tag string, format string, a ...interface{}) {
   genericLogHandler("ERROR", tag, format, a, SeverityError, true)
+}
+
+//WarnT logs a message of severity "warn".
+//Arguments: tag and printf formatted message
+func WarnT(tag string, format string, a ...interface{}) {
+  genericLogHandler("WARN", tag, format, a, SeverityWarn, true)
+}
+
+//WarnT logs a message of severity "warn".
+//Arguments: tag and printf formatted message
+func (l logger) WarnT(tag string, format string, a ...interface{}) {
+  genericLogHandler("WARN", tag, format, a, SeverityWarn, true)
 }
 
 //InfoT logs a message of severity "info".

@@ -19,6 +19,7 @@ import (
 //logPieces keeps all raw information about a log message for further processing (formatting, etc.)
 type logPieces struct {
   level      string              //log level.
+  tag        string              //log tag or empty.
   msg        string              //log message
   severity   common.RlogSeverity //log severity
   posInfo    bool                //does the log message need to be accompanied by file and line number?
@@ -57,7 +58,7 @@ func genericLogHandler(level string, tag string, format string, a []interface{},
     trace = getStackTrace()
   }
 
-  raw := logPieces{level, logMsg, severity, posInfo, file, line, pc, trace}
+  raw := logPieces{level, tag, logMsg, severity, posInfo, file, line, pc, trace}
 
   //Apply algorithm to create a nicely formatted log message as rlog message
   sysLogMsg := raw.generateLogMsg()
@@ -92,7 +93,7 @@ func (lp *logPieces) generateLogMsg() *common.RlogMsg {
   sysLogMsg := new(common.RlogMsg)
 
   //Add formatted log message to struct
-  header := formatHeaders(lp.posInfo, lp.level, lp.file, lp.line)
+  header := formatHeaders(lp.posInfo, lp.level, lp.tag, lp.file, lp.line)
   sysLogMsg.Msg = header + lp.msg
 
   //Set additional parameters
@@ -104,16 +105,28 @@ func (lp *logPieces) generateLogMsg() *common.RlogMsg {
   return sysLogMsg
 }
 
-//formatHeaders creates a log message header.
-//Arguments: [posInfo] determines whether file and line number should be included. [level] represents the log level
-//as string. [file] File causing log message. [line] Line number in file causing log message.
-//Returns: Formatted header
-func formatHeaders(posInfo bool, level string, file string, line int) string {
+// creates a log message header.
+//
+// posInfo: determines whether file and line number should be included.
+//
+// level: log level as string.
+//
+// tag: tag or empty
+//
+// file: source file causing log message.
+//
+// line: in file causing log message.
+//
+// return: Formatted header
+func formatHeaders(posInfo bool, level string, tag string, file string, line int) string {
 
   var header string
 
   //Add log level
   header += "<" + level + "> "
+  if tag != "" {
+    header += tag + " "
+  }
 
   if posInfo {
     //Add file and line number to log message
@@ -134,11 +147,13 @@ func isFilteredSeverity(severity common.RlogSeverity) bool {
 func isFilteredTag(tag string) bool {
 
   filtered := false
-  if config.tagsEnabledExcept != nil {
-    filtered, _ = config.tagsEnabledExcept[tag]
-  } else if config.tagsDisabledExcept != nil {
-    filtered, _ = config.tagsDisabledExcept[tag]
-    filtered = !filtered
+  if tag != "" { // uncategorized log messages default to visible
+    if config.tagsEnabledExcept != nil {
+      filtered, _ = config.tagsEnabledExcept[tag]
+    } else if config.tagsDisabledExcept != nil {
+      filtered, _ = config.tagsDisabledExcept[tag]
+      filtered = !filtered
+    }
   }
 
   return filtered
