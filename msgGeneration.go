@@ -93,7 +93,7 @@ func (lp *logPieces) generateLogMsg() *common.RlogMsg {
   sysLogMsg := new(common.RlogMsg)
 
   //Add formatted log message to struct
-  header := formatHeaders(lp.posInfo, lp.level, lp.tag, lp.file, lp.line)
+  header := formatHeaders(lp.posInfo, lp.level, lp.file, lp.line)
   sysLogMsg.Msg = header + lp.msg
 
   //Set additional parameters
@@ -118,15 +118,9 @@ func (lp *logPieces) generateLogMsg() *common.RlogMsg {
 // line: in file causing log message.
 //
 // return: Formatted header
-func formatHeaders(posInfo bool, level string, tag string, file string, line int) string {
+func formatHeaders(posInfo bool, level string, file string, line int) string {
 
   var header string
-
-  //Add log level
-  header += "<" + level + "> "
-  if tag != "" {
-    header += tag + " "
-  }
 
   if posInfo {
     //Add file and line number to log message
