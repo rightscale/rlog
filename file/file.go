@@ -4,6 +4,7 @@ Package file implements an output module for logging to a file using rlog.
 package file
 
 import (
+  "fmt"
   "github.com/brsc/rlog"
   "github.com/brsc/rlog/common"
   "os"
@@ -77,11 +78,9 @@ func (conf *fileLogger) LaunchModule(dataChan <-chan (*common.RlogMsg), flushCha
 
 //writeMsg writes message to file
 func (conf *fileLogger) writeMsg(rawRlogMsg *common.RlogMsg, prefix string) {
-  _, err := conf.fileHandle.WriteString(
+  _, err := fmt.Fprintln(
+    conf.fileHandle,
     common.FormatMessage(rawRlogMsg, prefix, conf.removeNewlines))
-  if err != nil {
-    _, err = conf.fileHandle.WriteString("\n")
-  }
   if !conf.loggedError && err != nil {
     //Log logging error once (only once, otherwise we get a feedback loop)
     conf.loggedError = true
