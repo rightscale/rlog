@@ -54,6 +54,7 @@ Example:
 
 	rlog.Debug("debug log entry")
 	rlog.Info("info log entry")
+	rlog.Warn("warn log entry")
 	rlog.ErrorT(DATABASE, "Connection terminated")
 	rlog.Fatal("fatal log entry")
 

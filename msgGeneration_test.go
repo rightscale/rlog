@@ -22,9 +22,6 @@ func (s *Stateless) TestFormatHeaders(t *C) {
 
   //When posInfo set to true, level, file and line should appear in the log header
   header := formatHeaders(true, level, file, line)
-  if !strings.Contains(header, level) {
-    t.Fatalf("Expected log level in header. but header is only: " + header)
-  }
   if !strings.Contains(header, file) {
     t.Fatalf("Expected file name in header. but header is only: " + header)
   }
@@ -35,9 +32,6 @@ func (s *Stateless) TestFormatHeaders(t *C) {
   //When posInfo set to false, level should appear in log header but
   //file and line should not appear in log header
   header = formatHeaders(false, level, file, line)
-  if !strings.Contains(header, level) {
-    t.Fatalf("Expected log level in header. but header is only: " + header)
-  }
   if strings.Contains(header, file) {
     t.Fatalf("Expected no file name in header. but header is only: " + header)
   }
@@ -56,12 +50,13 @@ func (s *Stateless) TestGenerateLogMessage(t *C) {
 //Parameters: [t] Testing framework. [severity] Expected severity level
 func generateLogMessage_helper(t *C, severity common.RlogSeverity) {
   level := "testLevel"
+  tag := "hmmm"
   msg := "testMessage"
   file := "test/testfile.go"
   line := 10
   pc := uint(200)
 
-  rawTestInfo := logPieces{level, msg, severity, false, file, line, pc, "trace"}
+  rawTestInfo := logPieces{level, tag, msg, severity, false, file, line, pc, "trace"}
   rlm := rawTestInfo.generateLogMsg()
   if rlm.Pc != pc {
     t.Fatalf("Expected PC to be %d, but it is: %d", pc, rlm.Pc)
@@ -122,11 +117,12 @@ func (s *Stateless) TestGetStackTrace(t *C) {
 }
 
 func (s *Initialized) TestIsFilteredSeverity(t *C) {
-  config.Severity = SeverityError
+  config.SeverityFromString("warn")
 
   //It should filter debug and info
   t.Assert(isFilteredSeverity(SeverityDebug), Equals, true)
   t.Assert(isFilteredSeverity(SeverityInfo), Equals, true)
+  t.Assert(isFilteredSeverity(SeverityWarn), Equals, false)
   t.Assert(isFilteredSeverity(SeverityError), Equals, false)
   t.Assert(isFilteredSeverity(SeverityFatal), Equals, false)
 }

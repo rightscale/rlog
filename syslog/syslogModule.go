@@ -9,6 +9,8 @@ import (
   "github.com/brsc/rlog/common"
   "log"
   goSyslog "log/syslog"
+  "os"
+  "path/filepath"
   "strings"
 )
 
@@ -39,8 +41,9 @@ func NewLocalSyslogLogger() (*syslogModuleConfig, error) {
 
   var err error
   conf := new(syslogModuleConfig)
+  _, processName := filepath.Split(os.Args[0]) // use leaf name instead of full path to binary
 
-  conf.syslogConn, err = goSyslog.Dial(network, addr, goSyslog.LOG_INFO, "")
+  conf.syslogConn, err = goSyslog.Dial(network, addr, goSyslog.LOG_INFO, processName)
   if err != nil {
     log.Printf("Could not open connection to syslog, reason: " + err.Error())
     return nil, err
@@ -89,6 +92,8 @@ func (conf *syslogModuleConfig) syslogProcessMessage(m *common.RlogMsg) {
     conf.syslogConn.Debug(logMsg)
   case rlog.SeverityInfo:
     conf.syslogConn.Info(logMsg)
+  case rlog.SeverityWarn:
+    conf.syslogConn.Warning(logMsg)
   case rlog.SeverityError:
     conf.syslogConn.Err(logMsg)
   case rlog.SeverityFatal:
