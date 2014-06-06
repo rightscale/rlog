@@ -5,7 +5,7 @@ package main
 
 import (
   "github.com/brsc/rlog"
-  "github.com/brsc/rlog/stdout"
+  "github.com/brsc/rlog/console"
 )
 
 func main() {
@@ -13,7 +13,7 @@ func main() {
   const TAG1 string = "tag1"
   const TAG2 string = "tags"
 
-  rlog.EnableModule(stdout.NewStdoutLogger(true))
+  rlog.EnableModule(console.NewStdoutLogger(true))
   conf := rlog.GetDefaultConfig()
   conf.DisableTagsExcept([]string{TAG1})
   rlog.Start(conf)
