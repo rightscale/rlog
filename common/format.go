@@ -3,6 +3,7 @@ package common
 import (
 	"fmt"
 	"os"
+	"path"
 	"regexp"
 	"strconv"
 )
@@ -13,7 +14,7 @@ var tabsNewlines = regexp.MustCompile(`\n(\t)?`)
 //SyslogHeader gathers environment information to generate a log prefix
 func SyslogHeader() string {
 	//Fetch process name, pid and hostname
-	processName := os.Args[0]
+	processName := path.Base(os.Args[0])
 	pid := strconv.Itoa(os.Getpid())
 	hostname, err := os.Hostname()
 

@@ -9,6 +9,8 @@ import (
 	"github.com/brsc/rlog/common"
 	"log"
 	goSyslog "log/syslog"
+	"os"
+	"path"
 	"strings"
 )
 
@@ -40,7 +42,7 @@ func NewLocalSyslogLogger() (*syslogModuleConfig, error) {
 	var err error
 	conf := new(syslogModuleConfig)
 
-	conf.syslogConn, err = goSyslog.Dial(network, addr, goSyslog.LOG_INFO, "")
+	conf.syslogConn, err = goSyslog.Dial(network, addr, goSyslog.LOG_INFO, path.Base(os.Args[0]))
 	if err != nil {
 		log.Printf("Could not open connection to syslog, reason: " + err.Error())
 		return nil, err
