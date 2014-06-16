@@ -5,8 +5,8 @@ package main
 
 import (
 	"github.com/rightscale/rlog"
+	"github.com/rightscale/rlog/console"
 	"github.com/rightscale/rlog/file"
-	"github.com/rightscale/rlog/stdout"
 	"github.com/rightscale/rlog/syslog"
 	"strings"
 )
@@ -27,7 +27,8 @@ func main() {
 
 	rlog.EnableModule(syslogModule)
 	rlog.EnableModule(fileModule)
-	rlog.EnableModule(stdout.NewStdoutLogger(true))
+	rlog.EnableModule(console.NewStdoutLogger(true))
+	rlog.EnableModule(console.NewStderrLogger(true))
 	rlog.Start(rlog.GetDefaultConfig())
 	defer rlog.Flush()
 
