@@ -29,7 +29,9 @@ func main() {
 	rlog.EnableModule(fileModule)
 	rlog.EnableModule(console.NewStdoutLogger(true))
 	rlog.EnableModule(console.NewStderrLogger(true))
-	rlog.Start(rlog.GetDefaultConfig())
+	conf := rlog.GetDefaultConfig()
+	conf.Severity = rlog.SeverityDebug
+	rlog.Start(conf)
 	defer rlog.Flush()
 
 	//Test all the different log levels
@@ -51,7 +53,7 @@ func main() {
 	rlog.Debug("---------------------------")
 
 	//A very long log message
-	rlog.Debug(strings.Repeat("hello Rightscale", 1000))
+	rlog.Debug(strings.Repeat("hello rlog, ", 1000))
 
 	//All done
 	rlog.Debug("Test permutations completed")

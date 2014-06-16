@@ -227,13 +227,13 @@ func (l logger) Info(format string, a ...interface{}) {
 //Debug logs a message of severity "debug".
 //Arguments: printf formatted message
 func Debug(format string, a ...interface{}) {
-	genericLogHandler("DEBUG", "", format, a, SeverityDebug, true)
+	genericLogHandler("DEBUG", "", format, a, SeverityDebug, false)
 }
 
 //Debug logs a message of severity "debug".
 //Arguments: printf formatted message
 func (l logger) Debug(format string, a ...interface{}) {
-	genericLogHandler("DEBUG", "", format, a, SeverityDebug, true)
+	genericLogHandler("DEBUG", "", format, a, SeverityDebug, false)
 }
 
 //===== Logging API with tags =====
@@ -289,13 +289,13 @@ func (l logger) InfoT(tag string, format string, a ...interface{}) {
 //DebugT logs a message of severity "debug".
 //Arguments: tag and printf formatted message
 func DebugT(tag string, format string, a ...interface{}) {
-	genericLogHandler("DEBUG", tag, format, a, SeverityDebug, true)
+	genericLogHandler("DEBUG", tag, format, a, SeverityDebug, false)
 }
 
 //DebugT logs a message of severity "debug".
 //Arguments: tag and printf formatted message
 func (l logger) DebugT(tag string, format string, a ...interface{}) {
-	genericLogHandler("DEBUG", tag, format, a, SeverityDebug, true)
+	genericLogHandler("DEBUG", tag, format, a, SeverityDebug, false)
 }
 
 //===== Logging API: tools =====
