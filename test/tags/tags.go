@@ -4,8 +4,8 @@ Application tags are test permutations testing tag based filtering in rlog.
 package main
 
 import (
-	"github.com/brsc/rlog"
-	"github.com/brsc/rlog/stdout"
+	"github.com/rightscale/rlog"
+	"github.com/rightscale/rlog/stdout"
 )
 
 func main() {

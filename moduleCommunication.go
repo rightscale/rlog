@@ -7,7 +7,7 @@ goroutine accessing the logger API and the modules writing the log messages to v
 
 import (
 	"container/list"
-	"github.com/brsc/rlog/common"
+	"github.com/rightscale/rlog/common"
 	"log"
 	"time"
 )

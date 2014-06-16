@@ -7,7 +7,7 @@ These tests cover:
 package rlog
 
 import (
-	"github.com/brsc/rlog/common"
+	"github.com/rightscale/rlog/common"
 	. "launchpad.net/gocheck"
 	"runtime"
 	"strconv"

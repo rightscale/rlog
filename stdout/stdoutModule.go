@@ -5,7 +5,7 @@ package stdout
 
 import (
 	"fmt"
-	"github.com/brsc/rlog/common"
+	"github.com/rightscale/rlog/common"
 )
 
 //Configuration of stdout module

@@ -4,8 +4,8 @@ Package file implements an output module for logging to a file using rlog.
 package file
 
 import (
-	"github.com/brsc/rlog"
-	"github.com/brsc/rlog/common"
+	"github.com/rightscale/rlog"
+	"github.com/rightscale/rlog/common"
 	"os"
 )
 

@@ -4,10 +4,10 @@ Application modules are test permutations testing various rlog output modules.
 package main
 
 import (
-	"github.com/brsc/rlog"
-	"github.com/brsc/rlog/file"
-	"github.com/brsc/rlog/stdout"
-	"github.com/brsc/rlog/syslog"
+	"github.com/rightscale/rlog"
+	"github.com/rightscale/rlog/file"
+	"github.com/rightscale/rlog/stdout"
+	"github.com/rightscale/rlog/syslog"
 	"strings"
 )
 

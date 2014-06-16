@@ -5,8 +5,8 @@ package syslog
 
 import (
 	"fmt"
-	"github.com/brsc/rlog"
-	"github.com/brsc/rlog/common"
+	"github.com/rightscale/rlog"
+	"github.com/rightscale/rlog/common"
 	"log"
 	goSyslog "log/syslog"
 	"os"

@@ -3,7 +3,7 @@ package rlog
 import (
 	"container/list"
 	"fmt"
-	"github.com/brsc/rlog/common"
+	"github.com/rightscale/rlog/common"
 	"log"
 	"math/rand"
 	"sync/atomic"

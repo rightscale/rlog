@@ -9,7 +9,7 @@ package rlog
 
 import (
 	"container/list"
-	"github.com/brsc/rlog/common"
+	"github.com/rightscale/rlog/common"
 	. "launchpad.net/gocheck"
 	"strconv"
 	"time"
