@@ -22,9 +22,6 @@ func (s *Stateless) TestFormatHeaders(t *C) {
 
 	//When posInfo set to true, level, file and line should appear in the log header
 	header := formatHeaders(true, level, file, line)
-	if !strings.Contains(header, level) {
-		t.Fatalf("Expected log level in header. but header is only: " + header)
-	}
 	if !strings.Contains(header, file) {
 		t.Fatalf("Expected file name in header. but header is only: " + header)
 	}
@@ -35,9 +32,6 @@ func (s *Stateless) TestFormatHeaders(t *C) {
 	//When posInfo set to false, level should appear in log header but
 	//file and line should not appear in log header
 	header = formatHeaders(false, level, file, line)
-	if !strings.Contains(header, level) {
-		t.Fatalf("Expected log level in header. but header is only: " + header)
-	}
 	if strings.Contains(header, file) {
 		t.Fatalf("Expected no file name in header. but header is only: " + header)
 	}
