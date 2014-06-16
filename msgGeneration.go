@@ -112,9 +112,6 @@ func formatHeaders(posInfo bool, level string, file string, line int) string {
 
 	var header string
 
-	//Add log level
-	header += "<" + level + "> "
-
 	if posInfo {
 		//Add file and line number to log message
 		header += "[" + file + ":" + strconv.Itoa(line) + "] "
