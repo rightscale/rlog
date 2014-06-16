@@ -12,10 +12,11 @@ import (
 
 //===== severity levels map to a couple of constants =====
 const (
-	SeverityFatal common.RlogSeverity = iota
-	SeverityError common.RlogSeverity = iota
-	SeverityInfo  common.RlogSeverity = iota
-	SeverityDebug common.RlogSeverity = iota
+	SeverityFatal   common.RlogSeverity = iota
+	SeverityError   common.RlogSeverity = iota
+	SeverityWarning common.RlogSeverity = iota
+	SeverityInfo    common.RlogSeverity = iota
+	SeverityDebug   common.RlogSeverity = iota
 )
 
 //===== Data types =====
@@ -179,6 +180,18 @@ func (l logger) Error(format string, a ...interface{}) {
 	genericLogHandler("ERROR", "", format, a, SeverityError, true)
 }
 
+//Warning logs a message of severity "warning".
+//Arguments: printf formatted message
+func Warning(format string, a ...interface{}) {
+	genericLogHandler("WARNING", "", format, a, SeverityWarning, false)
+}
+
+//Warning logs a message of severity "warning".
+//Arguments: printf formatted message
+func (l logger) Warning(format string, a ...interface{}) {
+	genericLogHandler("WARNING", "", format, a, SeverityWarning, false)
+}
+
 //Info logs a message of severity "info".
 //Arguments: printf formatted message
 func Info(format string, a ...interface{}) {
@@ -227,6 +240,18 @@ func ErrorT(tag string, format string, a ...interface{}) {
 //Arguments: tag and printf formatted message
 func (l logger) ErrorT(tag string, format string, a ...interface{}) {
 	genericLogHandler("ERROR", tag, format, a, SeverityError, true)
+}
+
+//WarningT logs a message of severity "warning".
+//Arguments: tag and printf formatted message
+func WarningT(tag string, format string, a ...interface{}) {
+	genericLogHandler("WARNING", tag, format, a, SeverityWarning, false)
+}
+
+//WarningT logs a message of severity "warning".
+//Arguments: tag and printf formatted message
+func (l logger) WarningT(tag string, format string, a ...interface{}) {
+	genericLogHandler("WARNING", tag, format, a, SeverityWarning, false)
 }
 
 //InfoT logs a message of severity "info".
