@@ -11,8 +11,8 @@ import (
 
 // Regex to remove tabs and newlines.
 const (
-  replacementWhitespacePattern = `[\r\n\t]+`
-  replacementWhitespace        = "  "
+	replacementWhitespacePattern = `[\r\n\t]+`
+	replacementWhitespace        = "  "
 )
 
 var replaceWhitespaceRegex = regexp.MustCompile(replacementWhitespacePattern)
