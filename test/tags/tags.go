@@ -5,7 +5,7 @@ package main
 
 import (
 	"github.com/rightscale/rlog"
-	"github.com/rightscale/rlog/stdout"
+	"github.com/rightscale/rlog/console"
 )
 
 func main() {
@@ -13,7 +13,7 @@ func main() {
 	const TAG1 string = "tag1"
 	const TAG2 string = "tags"
 
-	rlog.EnableModule(stdout.NewStdoutLogger(true))
+	rlog.EnableModule(console.NewStdoutLogger(true))
 	conf := rlog.GetDefaultConfig()
 	conf.DisableTagsExcept([]string{TAG1})
 	rlog.Start(conf)

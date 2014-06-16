@@ -5,11 +5,11 @@ package main
 
 import (
 	"github.com/rightscale/rlog"
-	"github.com/rightscale/rlog/stdout"
+	"github.com/rightscale/rlog/console"
 )
 
 func main() {
-	rlog.EnableModule(stdout.NewStdoutLogger(true))
+	rlog.EnableModule(console.NewStdoutLogger(true))
 	rlog.Start(rlog.GetDefaultConfig())
 	defer rlog.Flush()
 
