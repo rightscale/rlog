@@ -6,6 +6,7 @@ import (
 	"github.com/rightscale/rlog/common"
 	"log"
 	"math/rand"
+	"strings"
 	"sync/atomic"
 	"time"
 )
@@ -129,6 +130,25 @@ func launchAllModules() {
 }
 
 //===== Configuration API =====
+// converts the given string value to log level (severity).
+//
+// value: to convert
+func (c *RlogConfig) SeverityFromString(value string) {
+	switch strings.ToLower(value) {
+	case "fatal":
+		c.Severity = SeverityFatal
+	case "error":
+		c.Severity = SeverityError
+	case "warning":
+		c.Severity = SeverityWarning
+	case "info":
+		c.Severity = SeverityInfo
+	case "debug":
+		c.Severity = SeverityDebug
+	default:
+		panic(fmt.Sprintf("Unknown severity: %s", value))
+	}
+}
 
 //EnableTagsExcept enables output for all messages except the ones carrying one of the tags
 //specified. Using "EnableTagsExcept" overwrites the settings from "DisableTagsExcept".
