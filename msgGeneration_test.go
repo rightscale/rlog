@@ -123,10 +123,12 @@ func (s *Stateless) TestGetStackTrace(t *C) {
 
 func (s *Initialized) TestIsFilteredSeverity(t *C) {
 	config.Severity = SeverityError
+	config.SeverityFromString("warning")
 
 	//It should filter debug and info
 	t.Assert(isFilteredSeverity(SeverityDebug), Equals, true)
 	t.Assert(isFilteredSeverity(SeverityInfo), Equals, true)
+	t.Assert(isFilteredSeverity(SeverityWarning), Equals, false)
 	t.Assert(isFilteredSeverity(SeverityError), Equals, false)
 	t.Assert(isFilteredSeverity(SeverityFatal), Equals, false)
 }
