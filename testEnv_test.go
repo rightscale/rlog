@@ -4,7 +4,6 @@ Helper functions for testing
 package rlog
 
 import (
-	"container/list"
 	"io/ioutil"
 	. "launchpad.net/gocheck"
 	"log"
@@ -31,7 +30,7 @@ func (s *Uninitialized) SetUpSuite(c *C) {
 
 //before each: logger is reset and is uninitialized
 func (s *Uninitialized) SetUpTest(c *C) {
-	resetState()
+	ResetState()
 }
 
 //===== Test suite with initialized logger =====
@@ -63,7 +62,7 @@ var _ = Suite(&Stateless{})
 //before test: logger is reset and is initialized
 func (s *Stateless) SetUpSuite(c *C) {
 	disableGoLog()
-	resetState()
+	ResetState()
 
 	//Allocate multiple system threads to allow for real concurrency
 	runtime.GOMAXPROCS(10)
@@ -71,18 +70,9 @@ func (s *Stateless) SetUpSuite(c *C) {
 
 //===== Helper functions =====
 
-//resetState resets package global variables to their initial state for testing purpose
-func resetState() {
-	initialized = false
-	config = *new(RlogConfig)
-	msgChannels = list.New()
-	flushChannels = list.New()
-	activeModules = list.New()
-}
-
 //resetAndInitialize resets the logger to its default configuration and initializes it
 func resetAndInitialize() {
-	resetState()
+	ResetState()
 	conf := GetDefaultConfig()
 	conf.Severity = SeverityDebug
 	Start(conf)

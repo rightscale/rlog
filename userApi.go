@@ -329,6 +329,21 @@ func Flush() {
 	}
 }
 
+// Performs a reset of rlog state, intended for testing purposes only (with or
+// without flushing before-hand). Applications should call Flush() but should
+// usually not reset state. A reset is needed for unit testing due to rlog being
+// a singleton. Tests that leverage rlog therefore cannot be run in parallel and
+// also call reset state.
+func ResetState() {
+	if initialized {
+		config = *new(RlogConfig)
+		msgChannels = list.New()
+		flushChannels = list.New()
+		activeModules = list.New()
+		initialized = false
+	}
+}
+
 //===== Tools =====
 
 //generateRandomNumber generates a random number

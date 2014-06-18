@@ -14,6 +14,11 @@ PROJECT_PATH = "github.com/rightscale/rlog"
 # List of all packages within PROJECT_PATH
 PROJECT_PACKAGES = "." "common" "file" "stdout" "syslog"
 
+# test-only packages that can be imported by modules under test. seperate from
+# PROJECT_PACKAGES to avoid requiring test-only dependencies in production.
+TEST_PROJECT_PACKAGES = "test/loggerObject" "test/modules" "test/tags"\
+  "test/with_gocheck" "test/with_testing"
+
 # Dependencies to be fetched with "go get"
 GO_GET_DEPEND = ""
 
@@ -24,7 +29,7 @@ GIT_CLONE_DEPEND = ""
 TEST_GO_GET_DEPEND = "launchpad.net/gocheck"
 
 # Packages that contain a binary to be installed
-GO_INSTALL = "test/loggerObject" "test/modules" "test/tags"
+GO_INSTALL = ""
 
 # ===== leave this alone (usually :-)) =====
 
@@ -46,6 +51,11 @@ test: go-compiler gopath dependencies test-dependencies
 	done
 	@for pkg in $(PROJECT_PACKAGES) ; do \
 		cd $(GOPATH) ; \
+		go test $(PROJECT_PATH)/$$pkg ; \
+	done
+	@for pkg in $(TEST_PROJECT_PACKAGES) ; do \
+		cd $(GOPATH) ; \
+		go install $(PROJECT_PATH)/$$pkg ; \
 		go test $(PROJECT_PATH)/$$pkg ; \
 	done
 
