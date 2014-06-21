@@ -91,6 +91,8 @@ func (conf *syslogModuleConfig) syslogProcessMessage(m *common.RlogMsg) {
 		conf.syslogConn.Debug(logMsg)
 	case rlog.SeverityInfo:
 		conf.syslogConn.Info(logMsg)
+	case rlog.SeverityWarning:
+		conf.syslogConn.Warning(logMsg)
 	case rlog.SeverityError:
 		conf.syslogConn.Err(logMsg)
 	case rlog.SeverityFatal:

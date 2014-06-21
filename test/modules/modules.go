@@ -37,6 +37,7 @@ func main() {
 	//Test all the different log levels
 	rlog.Debug("debug log entry")
 	rlog.Info("info log entry")
+	rlog.Warning("warning log entry")
 	rlog.Error("error log entry")
 	rlog.Fatal("fatal log entry")
 
