@@ -135,11 +135,13 @@ func (s *Initialized) TestIsFilteredTag(t *C) {
 	config.EnableTagsExcept([]string{tag1})
 	t.Assert(isFilteredTag(tag1), Equals, true)
 	t.Assert(isFilteredTag(tag2), Equals, false)
+	t.Assert(isFilteredTag(""), Equals, false)
 
 	//Test DisableTagsExcept
 	config.DisableTagsExcept([]string{tag1})
 	t.Assert(isFilteredTag(tag1), Equals, false)
 	t.Assert(isFilteredTag(tag2), Equals, true)
+	t.Assert(isFilteredTag(""), Equals, false)
 }
 
 //getCurrentStackEnvironment resets the logger, generates and error message and intercepts it. It furthermore

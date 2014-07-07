@@ -131,11 +131,13 @@ func isFilteredSeverity(severity common.RlogSeverity) bool {
 func isFilteredTag(tag string) bool {
 
 	filtered := false
-	if config.tagsEnabledExcept != nil {
-		filtered, _ = config.tagsEnabledExcept[tag]
-	} else if config.tagsDisabledExcept != nil {
-		filtered, _ = config.tagsDisabledExcept[tag]
-		filtered = !filtered
+	if tag != "" { // uncategorized log messages default to visible
+		if config.tagsEnabledExcept != nil {
+			filtered, _ = config.tagsEnabledExcept[tag]
+		} else if config.tagsDisabledExcept != nil {
+			filtered, _ = config.tagsDisabledExcept[tag]
+			filtered = !filtered
+		}
 	}
 
 	return filtered
