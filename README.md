@@ -113,5 +113,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 Maintained by
  - [Sapphire Team](https://wookiee.rightscale.com/display/rightscale/Meet+the+Sapphire+Team)
+
 Merge to master whitelist
  - @ryanwilliamson
