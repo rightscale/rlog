@@ -8,6 +8,7 @@ import (
 	"github.com/rightscale/rlog/console"
 	"github.com/rightscale/rlog/file"
 	"github.com/rightscale/rlog/syslog"
+	"os"
 	"strings"
 )
 
@@ -20,7 +21,12 @@ func main() {
 	}
 
 	//Setup file logger
-	fileModule, err := file.NewFileLogger("test.txt", true, true)
+	log_file_name := "tmp/test.txt"
+	rotated_log_name := log_file_name + ".1"
+	if _, err = os.Stat(rotated_log_name); err == nil {
+		os.Remove(rotated_log_name)
+	}
+	fileModule, err := file.NewFileLogger(log_file_name, true, true)
 	if err != nil {
 		panic("Getting file logger instance failed: " + err.Error())
 	}
@@ -38,6 +44,14 @@ func main() {
 	rlog.Debug("debug log entry")
 	rlog.Info("info log entry")
 	rlog.Warning("warning log entry")
+
+	// simulate log rotation followed by SIGHUP and then flush.
+	err = os.Rename(log_file_name, rotated_log_name)
+	if err != nil {
+		panic(err)
+	}
+	rlog.Flush() // will reopen logs
+
 	rlog.Error("error log entry")
 	rlog.Fatal("fatal log entry")
 

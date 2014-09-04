@@ -32,27 +32,36 @@ const (
 //Returns: instance of syslog logger module in case of success, error otherwise
 func NewLocalSyslogLogger() (*syslogModuleConfig, error) {
 
+	conf := new(syslogModuleConfig)
+	err := conf.connectToSyslog()
+	if err != nil {
+		return nil, err
+	}
+	conf.syslogConn.Debug("rlog syslog module started successfully")
+	return conf, nil
+}
+
+// establishes the connection to syslog.
+func (conf *syslogModuleConfig) connectToSyslog() error {
 	//Exposing these parameters to the user is currently not implemented.
 	//Set it to the Go defaults for "log to local syslog server"
 	//Arguments (not yet implemented): [network] connection type, can be: SyslogTCP and SyslogUDP, [addr] target
 	//syslog server addr. Use SyslogLocalhost constant to log to syslog on local host
 	var network string = syslogUnix
 	var addr string = syslogLocalhost
-
 	var err error
-	conf := new(syslogModuleConfig)
 
 	conf.syslogConn, err = goSyslog.Dial(network, addr, goSyslog.LOG_INFO, path.Base(os.Args[0]))
 	if err != nil {
 		log.Printf("Could not open connection to syslog, reason: " + err.Error())
-		return nil, err
-	} else if conf.syslogConn == nil {
-		log.Printf("Could not retrieve connection to syslog")
-		return nil, fmt.Errorf("Could not retrieve connection to syslog")
-	} else {
-		conf.syslogConn.Debug("rlog syslog module started successfully")
-		return conf, nil
+		return err
 	}
+	if conf.syslogConn == nil {
+		log.Printf("Could not retrieve connection to syslog")
+		return fmt.Errorf("Could not retrieve connection to syslog")
+	}
+
+	return nil
 }
 
 //LaunchModule is intended to run in a separate goroutine. It prints log messages to syslog
@@ -64,7 +73,17 @@ func (conf *syslogModuleConfig) LaunchModule(dataChan <-chan (*common.RlogMsg), 
 		select {
 		case logMsg := <-dataChan:
 			//Received log message, print it
-			conf.syslogProcessMessage(logMsg)
+			err := conf.syslogProcessMessage(logMsg)
+			if err != nil {
+				// we may be able to work around intermittent failures by reconnecting.
+				if conf.syslogReconnect() != nil {
+					err = conf.syslogProcessMessage(logMsg)
+				}
+			}
+			if err != nil {
+				// panic if reconnecting did not resolve the issue.
+				panic(err)
+			}
 		case ret := <-flushChan:
 			//Flush and return success
 			conf.syslogFlush(dataChan)
@@ -75,7 +94,7 @@ func (conf *syslogModuleConfig) LaunchModule(dataChan <-chan (*common.RlogMsg), 
 
 //syslogProcessMessage prints the message to syslog
 //Arguments: log message
-func (conf *syslogModuleConfig) syslogProcessMessage(m *common.RlogMsg) {
+func (conf *syslogModuleConfig) syslogProcessMessage(m *common.RlogMsg) error {
 
 	//Prepare log message. Add stack trace of severity is error or fatal
 	logMsg := m.Msg
@@ -86,30 +105,65 @@ func (conf *syslogModuleConfig) syslogProcessMessage(m *common.RlogMsg) {
 	}
 
 	//Write log message using appropriate syslog severity level
+	var err error
 	switch m.Severity {
 	case rlog.SeverityDebug:
-		conf.syslogConn.Debug(logMsg)
+		err = conf.syslogConn.Debug(logMsg)
 	case rlog.SeverityInfo:
-		conf.syslogConn.Info(logMsg)
+		err = conf.syslogConn.Info(logMsg)
 	case rlog.SeverityWarning:
-		conf.syslogConn.Warning(logMsg)
+		err = conf.syslogConn.Warning(logMsg)
 	case rlog.SeverityError:
-		conf.syslogConn.Err(logMsg)
+		err = conf.syslogConn.Err(logMsg)
 	case rlog.SeverityFatal:
-		conf.syslogConn.Crit(logMsg)
+		err = conf.syslogConn.Crit(logMsg)
 	}
+	return err
 }
 
 //syslogFlush writes all pending log messages to syslog
 //Arguments: data channel to access all pending messages
 func (conf *syslogModuleConfig) syslogFlush(dataChan <-chan (*common.RlogMsg)) {
+
+	// we may already be panicking due to losing syslog connection.
+	if conf.syslogConn == nil {
+		return
+	}
+
+	// always reestablish syslog connection before flushing message channel to
+	// ensure connection liveness (after a day of being open, etc.).
+	err := conf.syslogReconnect()
+	if err != nil {
+		// panic if unable to reestablish connection (rsyslog service is down, etc.)
+		// this is useful for a service because it can be restarted by its outer
+		// harness with appropriate alerts, etc.
+		panic(err)
+	}
+
 	for {
 		//Read from data channel until there is nothing more to read, then return
 		select {
 		case logMsg := <-dataChan:
-			conf.syslogProcessMessage(logMsg)
+			err = conf.syslogProcessMessage(logMsg)
+			if err != nil {
+				// we reconnected before we began flushing so any failure during flush
+				// cannot logically be resolved by reconnecting again here.
+				panic(err)
+			}
 		default:
 			return
 		}
 	}
+}
+
+// closes existing connection and attempts to reconnect to syslog.
+func (conf *syslogModuleConfig) syslogReconnect() error {
+	oldSyslogConn := conf.syslogConn
+	conf.syslogConn = nil
+	err := oldSyslogConn.Close()
+	if err == nil {
+		err = conf.connectToSyslog()
+	}
+
+	return err
 }
