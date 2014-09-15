@@ -41,7 +41,7 @@ func (conf *fileLogger) openFile(path string, overwrite bool) error {
 		var dirMode os.FileMode = 0770 // user/group-only read/write/traverse
 		err = os.MkdirAll(parentDir, dirMode)
 		if err != nil {
-			panic(err)
+			return err
 		}
 	}
 
