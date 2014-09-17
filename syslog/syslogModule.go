@@ -99,10 +99,14 @@ func (conf *syslogModuleConfig) syslogProcessMessage(m *common.RlogMsg) error {
 	//Prepare log message. Add stack trace of severity is error or fatal
 	logMsg := m.Msg
 	if m.Severity == rlog.SeverityError || m.Severity == rlog.SeverityFatal {
-		//Remove tabs from stack trace and append stack trace to log message
-		sTrace := strings.Replace(m.StackTrace, "\t", "", -1)
-		logMsg += " " + sTrace
+		logMsg += " -- " + m.StackTrace
 	}
+
+	// remove tabs, carriage returns and newlines from any messages sent to syslog
+	// due to problems with recording whitespace.
+	logMsg = strings.Replace(logMsg, "\t", "", -1)
+	logMsg = strings.Replace(logMsg, "\r", "", -1)
+	logMsg = strings.Replace(logMsg, "\n", " -- ", -1)
 
 	//Write log message using appropriate syslog severity level
 	var err error
