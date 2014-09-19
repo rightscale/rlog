@@ -38,7 +38,7 @@ func (conf *fileLogger) openFile(path string, overwrite bool) error {
 
 	parentDir, _ := filepath.Split(path)
 	if parentDir != "" {
-		var dirMode os.FileMode = 0770 // user/group-only read/write/traverse
+		var dirMode os.FileMode = 0775 // user/group-only read/write/traverse, world read/traverse
 		err = os.MkdirAll(parentDir, dirMode)
 		if err != nil {
 			return err
@@ -47,7 +47,7 @@ func (conf *fileLogger) openFile(path string, overwrite bool) error {
 
 	// open write-only (will never read back from log file).
 	var fh *os.File
-	var fileMode os.FileMode = 0660 // user/group-only read/write
+	var fileMode os.FileMode = 0664 // user/group-only read/write, world read
 
 	if overwrite {
 		// create or truncate
