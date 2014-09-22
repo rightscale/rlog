@@ -15,9 +15,14 @@ import (
 func main() {
 
 	//Setup syslog module
-	syslogModule, err := syslog.NewLocalSyslogLogger()
+	facility, err := syslog.FacilityNameToValue("local6")
 	if err != nil {
-		panic("Getting syslog logger instance failed")
+		panic("Getting syslog facility value failed: " + err.Error())
+	}
+
+	syslogModule, err := syslog.NewLocalFacilitySyslogLogger(facility)
+	if err != nil {
+		panic("Getting syslog logger instance failed: " + err.Error())
 	}
 
 	//Setup file logger
