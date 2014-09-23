@@ -16,7 +16,11 @@ import (
 
 //Configuration of syslog module
 type syslogModuleConfig struct {
-	syslogConn *goSyslog.Writer
+	network    string           // one of ["", syslogTCP, syslogUDP]
+	raddr      string           // remote syslog server or empty for local
+	facility   int              // facility (e.g. LOG_LOCAL0)
+	tag        string           // tag for messages or empty for full binary path
+	syslogConn *goSyslog.Writer // writer
 }
 
 //Define constant for logging to syslog on localhost or remote logging
@@ -28,30 +32,86 @@ const (
 	syslogUDP       string = "udp"
 )
 
-//NewSyslogLogger enables logging to syslog.
+var facilityNames []string = []string{
+	"kern", "user", "mail", "daemon", "auth", "syslog", "lpr", "news",
+	"uucp", "cron", "security", "ftp", "ntp", "logaudit", "logalert", "clock",
+	"local0", "local1", "local2", "local3", "local4", "local5", "local6", "local7"}
+
+//NewLocalSyslogLogger enables logging to syslog.
 //Returns: instance of syslog logger module in case of success, error otherwise
 func NewLocalSyslogLogger() (*syslogModuleConfig, error) {
 
 	conf := new(syslogModuleConfig)
-	err := conf.connectToSyslog()
+	err := conf.connectToSyslog(
+		syslogUnix,
+		syslogLocalhost,
+		0, // =LOG_KERN, see NewLocalFacilitySyslogLogger() to select a facility
+		path.Base(os.Args[0]))
 	if err != nil {
 		return nil, err
 	}
-	conf.syslogConn.Debug("rlog syslog module started successfully")
 	return conf, nil
 }
 
-// establishes the connection to syslog.
-func (conf *syslogModuleConfig) connectToSyslog() error {
-	//Exposing these parameters to the user is currently not implemented.
-	//Set it to the Go defaults for "log to local syslog server"
-	//Arguments (not yet implemented): [network] connection type, can be: SyslogTCP and SyslogUDP, [addr] target
-	//syslog server addr. Use SyslogLocalhost constant to log to syslog on local host
-	var network string = syslogUnix
-	var addr string = syslogLocalhost
-	var err error
+//NewSyslogLogger enables logging to syslog with full syslog parameters.
+//Params: see syslog.Dial() remarks
+//Returns: instance of syslog logger module in case of success, error otherwise
+func NewLocalFacilitySyslogLogger(facility int) (*syslogModuleConfig, error) {
 
-	conf.syslogConn, err = goSyslog.Dial(network, addr, goSyslog.LOG_INFO, path.Base(os.Args[0]))
+	conf := new(syslogModuleConfig)
+	err := conf.connectToSyslog(
+		syslogUnix,
+		syslogLocalhost,
+		facility,
+		path.Base(os.Args[0]))
+	if err != nil {
+		return nil, err
+	}
+	return conf, nil
+}
+
+// converts given (lowercase) facility name to its integer value equivalent.
+func FacilityNameToValue(name string) (int, error) {
+	// note that golang as no built-in way to get index from array.
+	for idx, n := range facilityNames {
+		if n == name {
+			return idx, nil
+		}
+	}
+	return -1, fmt.Errorf("Unknown syslog facility name: %s\nMust be one of %v", name, facilityNames)
+}
+
+// converts given facility integer value to its (lowercase) name equivalent.
+func FacilityValueToName(value int) (string, error) {
+	if value < 0 || value >= len(facilityNames) {
+		return "", fmt.Errorf(
+			"facility is out of range = %d (must be 0-%d).",
+			value,
+			len(facilityNames)-1)
+	}
+	return facilityNames[value], nil
+}
+
+// establishes the connection to syslog.
+func (conf *syslogModuleConfig) connectToSyslog(
+	network,
+	raddr string,
+	facility int,
+	tag string) error {
+
+	facilityName, err := FacilityValueToName(facility)
+	if err != nil {
+		return err
+	}
+
+	var priority goSyslog.Priority = goSyslog.Priority(facility<<3) | goSyslog.LOG_INFO
+
+	conf.network = network
+	conf.raddr = raddr
+	conf.facility = facility
+	conf.tag = tag
+	conf.syslogConn, err = goSyslog.Dial(network, raddr, priority, tag)
+
 	if err != nil {
 		log.Printf("Could not open connection to syslog, reason: " + err.Error())
 		return err
@@ -61,6 +121,12 @@ func (conf *syslogModuleConfig) connectToSyslog() error {
 		return fmt.Errorf("Could not retrieve connection to syslog")
 	}
 
+	conf.syslogConn.Debug(
+		fmt.Sprintf(
+			"rlog syslog (re)connected with facility=%d(%s), tag=\"%s\"",
+			facility,
+			facilityName,
+			tag))
 	return nil
 }
 
@@ -166,7 +232,7 @@ func (conf *syslogModuleConfig) syslogReconnect() error {
 	conf.syslogConn = nil
 	err := oldSyslogConn.Close()
 	if err == nil {
-		err = conf.connectToSyslog()
+		err = conf.connectToSyslog(conf.network, conf.raddr, conf.facility, conf.tag)
 	}
 
 	return err
