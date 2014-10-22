@@ -20,7 +20,7 @@ func main() {
 		panic("Getting syslog facility value failed: " + err.Error())
 	}
 
-	syslogModule, err := syslog.NewLocalFacilitySyslogLogger(facility)
+	syslogModule, err := syslog.NewLocalFacilitySyslogLogger("", "", facility, "tmp/sysloggerHeartbeat.txt")
 	if err != nil {
 		panic("Getting syslog logger instance failed: " + err.Error())
 	}

@@ -11,25 +11,28 @@ import (
 	goSyslog "log/syslog"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 )
 
 //Configuration of syslog module
 type syslogModuleConfig struct {
-	network    string           // one of ["", syslogTCP, syslogUDP]
-	raddr      string           // remote syslog server or empty for local
-	facility   int              // facility (e.g. LOG_LOCAL0)
-	tag        string           // tag for messages or empty for full binary path
-	syslogConn *goSyslog.Writer // writer
+	network           string           // one of ["", syslogTCP, syslogUDP]
+	raddr             string           // remote syslog server or empty for local
+	facility          int              // facility (e.g. LOG_LOCAL0)
+	tag               string           // tag for messages or empty for full binary path
+	syslogConn        *goSyslog.Writer // writer
+	heartBeatFilePath string           // FIX: remove this when we figure out issue with silent syslogger
 }
 
 //Define constant for logging to syslog on localhost or remote logging
 //Not yet exposed
 const (
-	syslogLocalhost string = ""
-	syslogUnix      string = ""
-	syslogTCP       string = "tcp"
-	syslogUDP       string = "udp"
+	maxMessageLength int    = 6 * 1024 // FIX: limited to 6 KB to see if this keeps syslogger humming
+	syslogLocalhost  string = ""
+	syslogUnix       string = ""
+	syslogTCP        string = "tcp"
+	syslogUDP        string = "udp"
 )
 
 var facilityNames []string = []string{
@@ -56,12 +59,16 @@ func NewLocalSyslogLogger() (*syslogModuleConfig, error) {
 //NewSyslogLogger enables logging to syslog with full syslog parameters.
 //Params: see syslog.Dial() remarks
 //Returns: instance of syslog logger module in case of success, error otherwise
-func NewLocalFacilitySyslogLogger(facility int) (*syslogModuleConfig, error) {
+func NewLocalFacilitySyslogLogger(
+	network, raddr string,
+	facility int,
+	heartBeatFilePath string) (*syslogModuleConfig, error) {
 
 	conf := new(syslogModuleConfig)
+	conf.heartBeatFilePath = heartBeatFilePath // FIX: strictly for debugging
 	err := conf.connectToSyslog(
-		syslogUnix,
-		syslogLocalhost,
+		network,
+		raddr,
 		facility,
 		path.Base(os.Args[0]))
 	if err != nil {
@@ -127,6 +134,28 @@ func (conf *syslogModuleConfig) connectToSyslog(
 			facility,
 			facilityName,
 			tag))
+	conf.syslogConn.Debug(
+		fmt.Sprintf(
+			"rlog syslog network=\"%s\", raddr=\"%s\", heartBeatFilePath=\"%s\"",
+			network,
+			raddr,
+			conf.heartBeatFilePath))
+
+	// FIX: heartbeat for debugging only.
+	if conf.heartBeatFilePath != "" {
+		parentDir, _ := filepath.Split(conf.heartBeatFilePath)
+		if parentDir != "" {
+			var dirMode os.FileMode = 0775 // user/group-only read/write/traverse, world read/traverse
+			err = os.MkdirAll(parentDir, dirMode)
+			if err != nil {
+				return err
+			}
+		}
+		err = conf.writeHeartBeat("Starting heartbeat...")
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -174,8 +203,24 @@ func (conf *syslogModuleConfig) syslogProcessMessage(m *common.RlogMsg) error {
 	logMsg = strings.Replace(logMsg, "\r", "", -1)
 	logMsg = strings.Replace(logMsg, "\n", " -- ", -1)
 
-	//Write log message using appropriate syslog severity level
+	// FIX: truncate message in attempt to resolve issue with syslog going quiet.
+	// not sure what the max datagram size is or if this will help anything...
+	if len(logMsg) > maxMessageLength {
+		runes := []rune(logMsg)
+		logMsg = string(runes[0:maxMessageLength])
+	}
+
+	// FIX: write to heartbeat file to determine if this go routine is still
+	// running or has been blocked or died silently, etc.
 	var err error
+	if conf.heartBeatFilePath != "" {
+		err = conf.writeHeartBeat(logMsg)
+		if err != nil {
+			return err
+		}
+	}
+
+	//Write log message using appropriate syslog severity level
 	switch m.Severity {
 	case rlog.SeverityDebug:
 		err = conf.syslogConn.Debug(logMsg)
@@ -234,6 +279,23 @@ func (conf *syslogModuleConfig) syslogReconnect() error {
 	if err == nil {
 		err = conf.connectToSyslog(conf.network, conf.raddr, conf.facility, conf.tag)
 	}
+
+	return err
+}
+
+// closes existing connection and attempts to reconnect to syslog.
+func (conf *syslogModuleConfig) writeHeartBeat(logMsg string) error {
+	var fh *os.File
+	var fileMode os.FileMode = 0664 // user/group-only read/write, world read
+	var err error
+
+	// always overwrite.
+	fh, err = os.OpenFile(conf.heartBeatFilePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, fileMode)
+	if err != nil {
+		return err
+	}
+	defer fh.Close()
+	_, err = fmt.Fprintln(fh, logMsg)
 
 	return err
 }
