@@ -151,7 +151,7 @@ func (conf *syslogModuleConfig) connectToSyslog(
 				return err
 			}
 		}
-		err = conf.writeHeartBeat("Starting heartbeat...")
+		err = conf.writeHeartBeat("Starting heartbeat...", true)
 		if err != nil {
 			return err
 		}
@@ -168,10 +168,23 @@ func (conf *syslogModuleConfig) LaunchModule(dataChan <-chan (*common.RlogMsg), 
 		select {
 		case logMsg := <-dataChan:
 			//Received log message, print it
-			err := conf.syslogProcessMessage(logMsg)
+			var err error
+			if conf.heartBeatFilePath != "" {
+				err = conf.writeHeartBeat("Message popped from internal syslogger queue:", true)
+				if err != nil {
+					panic(err)
+				}
+			}
+			err = conf.syslogProcessMessage(logMsg)
 			if err != nil {
 				// we may be able to work around intermittent failures by reconnecting.
 				if conf.syslogReconnect() != nil {
+					if conf.heartBeatFilePath != "" {
+						err = conf.writeHeartBeat("Popped message following syslog reconnect:", true)
+						if err != nil {
+							panic(err)
+						}
+					}
 					err = conf.syslogProcessMessage(logMsg)
 				}
 			}
@@ -214,11 +227,12 @@ func (conf *syslogModuleConfig) syslogProcessMessage(m *common.RlogMsg) error {
 	// running or has been blocked or died silently, etc.
 	var err error
 	if conf.heartBeatFilePath != "" {
-		err = conf.writeHeartBeat(logMsg)
+		err = conf.writeHeartBeat(logMsg, false)
 		if err != nil {
 			return err
 		}
 	}
+	defer conf.writeHeartBeat("Successfully written to syslog.", false)
 
 	//Write log message using appropriate syslog severity level
 	switch m.Severity {
@@ -259,6 +273,12 @@ func (conf *syslogModuleConfig) syslogFlush(dataChan <-chan (*common.RlogMsg)) {
 		//Read from data channel until there is nothing more to read, then return
 		select {
 		case logMsg := <-dataChan:
+			if conf.heartBeatFilePath != "" {
+				err = conf.writeHeartBeat("Flushing message:", true)
+				if err != nil {
+					panic(err)
+				}
+			}
 			err = conf.syslogProcessMessage(logMsg)
 			if err != nil {
 				// we reconnected before we began flushing so any failure during flush
@@ -284,15 +304,37 @@ func (conf *syslogModuleConfig) syslogReconnect() error {
 }
 
 // closes existing connection and attempts to reconnect to syslog.
-func (conf *syslogModuleConfig) writeHeartBeat(logMsg string) error {
+func (conf *syslogModuleConfig) writeHeartBeat(
+	logMsg string,
+	overwrite bool) error {
+
 	var fh *os.File
 	var fileMode os.FileMode = 0664 // user/group-only read/write, world read
 	var err error
 
-	// always overwrite.
-	fh, err = os.OpenFile(conf.heartBeatFilePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, fileMode)
-	if err != nil {
-		return err
+	path := conf.heartBeatFilePath
+	if overwrite {
+		// create or truncate
+		// note that os.Create() is too permissive (i.e. grants world read/write).
+		fh, err = os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, fileMode)
+		if err != nil {
+			return err
+		}
+	} else {
+		_, err = os.Stat(path)
+		if os.IsNotExist(err) {
+			// not present, create it
+			fh, err = os.OpenFile(path, os.O_WRONLY|os.O_CREATE, fileMode)
+			if err != nil {
+				return err
+			}
+		} else {
+			// append to existing
+			fh, err = os.OpenFile(path, os.O_APPEND|os.O_WRONLY, fileMode)
+			if err != nil {
+				return err
+			}
+		}
 	}
 	defer fh.Close()
 	_, err = fmt.Fprintln(fh, logMsg)
